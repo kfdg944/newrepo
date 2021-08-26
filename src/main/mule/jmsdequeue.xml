@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:jms="http://www.mulesoft.org/schema/mule/jms" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/jms http://www.mulesoft.org/schema/mule/jms/current/mule-jms.xsd">
+	<http:listener-config name="HTTP_Listener_config" doc:name="HTTP Listener config" doc:id="28e4ffbc-5124-40de-9752-96e9ded6fe85" >
+		<http:listener-connection host="0.0.0.0" port="8081" />
+	</http:listener-config>
+	<jms:config name="JMS_Config" doc:name="JMS Config" doc:id="064f79f6-34ef-4221-aadb-562db0ef0cbe" >
+		<jms:active-mq-connection username="admin" password="admin" >
+			<jms:factory-configuration brokerUrl="tcp://localhost:61616" />
+		</jms:active-mq-connection>
+	</jms:config>
+	<jms:config name="JMS_Config1" doc:name="JMS Config" doc:id="020b39ff-2129-4b8f-8509-4a26235cdfd3" >
+		<jms:active-mq-connection username="admin" password="admin" >
+			<jms:factory-configuration brokerUrl="tcp://localhost:61616" />
+		</jms:active-mq-connection>
+	</jms:config>
+	<flow name="jmsdequeueFlow" doc:id="a03c992c-0b2f-4037-aa02-eec025f5bd7f" >
+		<http:listener doc:name="Listener" doc:id="bc857b1a-e3a8-4b75-b735-8f2775daf56b" config-ref="HTTP_Listener_config" path="/dequeu"/>
+		<jms:publish doc:name="Publish" doc:id="e2440a8f-3148-4eef-aad7-150022e245f1" config-ref="JMS_Config1" destination="sam"/>
+		<jms:consume doc:id="790a78d5-d44c-449e-ad83-630870efaf1c" config-ref="JMS_Config" destination="sam">
+			<jms:consumer-type >
+				<jms:queue-consumer />
+			</jms:consumer-type>
+		</jms:consume>
+		<ee:transform doc:name="Transform Message" doc:id="93b3e481-5de9-4754-9695-cd142cff6970">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+payload reduce $+$$]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<logger level="INFO" doc:name="Logger" doc:id="d7e94514-2f98-4f94-8ff3-fa0d4d667d99" message="#[payload]"/>
+	</flow>
+</mule>
